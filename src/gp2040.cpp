@@ -279,6 +279,14 @@ void GP2040::run() {
 		// (Post) Process for add-ons
 		addons.ProcessAddons();
 
+		// 接続確認用：2秒ごとにL+Rを押す
+		const uint32_t autoInputPhase = getMillis() % 4000;
+		
+		if (autoInputPhase >= 2000) {
+		    gamepad->state.buttons |= GAMEPAD_MASK_L1;
+		    gamepad->state.buttons |= GAMEPAD_MASK_R1;
+		}
+
 		gamepad->hotkey(); 	// check for MPGS hotkeys
 		rebootHotkeys.process(gamepad, configMode);
 
