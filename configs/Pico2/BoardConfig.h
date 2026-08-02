@@ -11,6 +11,8 @@
 
 #define BOARD_CONFIG_LABEL "Pico2"
 
+#define DEFAULT_INPUT_MODE INPUT_MODE_SWITCH_PRO
+
 // Main pin mapping Configuration
 //                                                  // GP2040 | Xinput | Switch  | PS3/4/5  | Dinput | Arcade |
 #define GPIO_PIN_02 GpioAction::BUTTON_PRESS_UP     // UP     | UP     | UP      | UP       | UP     | UP     |
