@@ -279,12 +279,26 @@ void GP2040::run() {
 		// (Post) Process for add-ons
 		addons.ProcessAddons();
 
-		// 接続確認用：2秒ごとにL+Rを押す
-		const uint32_t autoInputPhase = getMillis() % 4000;
+		const uint32_t elapsed = getMillis();
 		
-		if (autoInputPhase >= 2000) {
+		const bool pairingPress =
+		    (elapsed >= 2000 && elapsed < 3000) ||
+		    (elapsed >= 5000 && elapsed < 6000) ||
+		    (elapsed >= 8000 && elapsed < 9000);
+		
+		if (pairingPress) {
 		    gamepad->state.buttons |= GAMEPAD_MASK_L1;
 		    gamepad->state.buttons |= GAMEPAD_MASK_R1;
+		}
+		
+		// 10秒後から、1秒おきにAを0.2秒押す
+		if (elapsed >= 10000) {
+		    const uint32_t macroTime = elapsed - 10000;
+		    const uint32_t phase = macroTime % 1000;
+		
+		    if (phase < 200) {
+		        gamepad->state.buttons |= GAMEPAD_MASK_B2;
+		    }
 		}
 
 		gamepad->hotkey(); 	// check for MPGS hotkeys
