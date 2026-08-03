@@ -279,25 +279,216 @@ void GP2040::run() {
 		// (Post) Process for add-ons
 		addons.ProcessAddons();
 
+		// ============================================================
+		// Switch 2接続 ＋ シンクロミ周回
+		// ============================================================
+		
 		const uint32_t elapsed = getMillis();
 		
-		const bool pairingPress =
-		    (elapsed >= 2000 && elapsed < 3000) ||
-		    (elapsed >= 5000 && elapsed < 6000) ||
-		    (elapsed >= 8000 && elapsed < 9000);
+		// Switchでのボタン対応
+		constexpr uint32_t BUTTON_A = GAMEPAD_MASK_B2;
+		constexpr uint32_t BUTTON_B = GAMEPAD_MASK_B1;
+		constexpr uint32_t BUTTON_L = GAMEPAD_MASK_L1;
+		constexpr uint32_t BUTTON_R = GAMEPAD_MASK_R1;
 		
-		if (pairingPress) {
-		    gamepad->state.buttons |= GAMEPAD_MASK_L1;
-		    gamepad->state.buttons |= GAMEPAD_MASK_R1;
+		// 指定時間中だけボタンを押す
+		auto pressButtonDuring = [&](uint32_t timeValue,
+		                             uint32_t start,
+		                             uint32_t duration,
+		                             uint32_t buttonMask) {
+		    if (timeValue >= start && timeValue < start + duration) {
+		        gamepad->state.buttons |= buttonMask;
+		    }
+		};
+		
+		// ============================================================
+		// 1. 起動時のコントローラー認識
+		//
+		// L＋R → A → B → A
+		// ============================================================
+		
+		// 起動2秒後：L＋Rを0.1秒
+		if (elapsed >= 2000 && elapsed < 2100) {
+		    gamepad->state.buttons |= BUTTON_L;
+		    gamepad->state.buttons |= BUTTON_R;
 		}
 		
-		// 10秒後から、1秒おきにAを0.2秒押す
-		if (elapsed >= 10000) {
-		    const uint32_t macroTime = elapsed - 10000;
-		    const uint32_t phase = macroTime % 1000;
+		// 起動3秒後：Aを0.1秒
+		pressButtonDuring(elapsed, 3000, 100, BUTTON_A);
 		
-		    if (phase < 200) {
-		        gamepad->state.buttons |= GAMEPAD_MASK_B2;
+		// 起動4秒後：Bを0.1秒
+		pressButtonDuring(elapsed, 4000, 100, BUTTON_B);
+		
+		// 起動5秒後：Aを0.1秒
+		pressButtonDuring(elapsed, 5000, 100, BUTTON_A);
+		
+		// ============================================================
+		// 2. シンクロミ周回
+		// 接続処理終了後、7秒から開始
+		// ============================================================
+		
+		constexpr uint32_t MACRO_START_MS = 7000;
+		
+		// Synchro 1回：14.8秒
+		constexpr uint32_t SYNCHRO_ONE_MS = 14800;
+		
+		// Synchro 10回：148秒
+		constexpr uint32_t SYNCHRO_TEN_MS =
+		    SYNCHRO_ONE_MS * 10;
+		
+		// シンクロミとの会話：10.1秒
+		constexpr uint32_t TALK_MS = 10100;
+		
+		// Synchro 10回＋会話1回
+		constexpr uint32_t ONE_SET_MS =
+		    SYNCHRO_TEN_MS + TALK_MS;
+		
+		// 上記を10セット
+		constexpr uint32_t TEN_SETS_MS =
+		    ONE_SET_MS * 10;
+		
+		// 最後の位置調整：1.5秒
+		constexpr uint32_t MOVE_ADJUST_MS = 1500;
+		
+		// マクロ全体の時間
+		constexpr uint32_t FULL_CYCLE_MS =
+		    TEN_SETS_MS + MOVE_ADJUST_MS;
+		
+		if (elapsed >= MACRO_START_MS) {
+		
+		    // マクロを永久に繰り返す
+		    const uint32_t macroTime =
+		        (elapsed - MACRO_START_MS) % FULL_CYCLE_MS;
+		
+		    // ========================================================
+		    // Synchro＋TalkSynchromiを10セット
+		    // ========================================================
+		
+		    if (macroTime < TEN_SETS_MS) {
+		
+		        // 現在のセット内時間
+		        const uint32_t setTime =
+		            macroTime % ONE_SET_MS;
+		
+		        // ----------------------------------------------------
+		        // シンクロを10回
+		        // ----------------------------------------------------
+		
+		        if (setTime < SYNCHRO_TEN_MS) {
+		
+		            const uint32_t synchroTime =
+		                setTime % SYNCHRO_ONE_MS;
+		
+		            // 0秒：Lを押す
+		            // 0.5秒：Rも押す
+		            // 1秒：L＋Rを離す
+		            if (synchroTime < 1000) {
+		                gamepad->state.buttons |= BUTTON_L;
+		            }
+		
+		            if (synchroTime >= 500 &&
+		                synchroTime < 1000) {
+		                gamepad->state.buttons |= BUTTON_R;
+		            }
+		
+		            // 1.1秒：再びLを押す
+		            // 6.1秒：Rも押す
+		            // 6.6秒：L＋Rを離す
+		            if (synchroTime >= 1100 &&
+		                synchroTime < 6600) {
+		                gamepad->state.buttons |= BUTTON_L;
+		            }
+		
+		            if (synchroTime >= 6100 &&
+		                synchroTime < 6600) {
+		                gamepad->state.buttons |= BUTTON_R;
+		            }
+		
+		            // 8.1秒：Aを0.1秒
+		            pressButtonDuring(
+		                synchroTime,
+		                8100,
+		                100,
+		                BUTTON_A
+		            );
+		
+		            // 9.2秒：Aを0.1秒
+		            pressButtonDuring(
+		                synchroTime,
+		                9200,
+		                100,
+		                BUTTON_A
+		            );
+		        }
+		
+		        // ----------------------------------------------------
+		        // シンクロミに話しかける
+		        // ----------------------------------------------------
+		
+		        else {
+		            const uint32_t talkTime =
+		                setTime - SYNCHRO_TEN_MS;
+		
+		            // 最初のA
+		            pressButtonDuring(
+		                talkTime,
+		                0,
+		                100,
+		                BUTTON_A
+		            );
+		
+		            // 3秒後のA
+		            pressButtonDuring(
+		                talkTime,
+		                3100,
+		                100,
+		                BUTTON_A
+		            );
+		
+		            // 1.2秒後のA
+		            pressButtonDuring(
+		                talkTime,
+		                4400,
+		                100,
+		                BUTTON_A
+		            );
+		
+		            // 4秒後のA
+		            pressButtonDuring(
+		                talkTime,
+		                8500,
+		                100,
+		                BUTTON_A
+		            );
+		        }
+		    }
+		
+		    // ========================================================
+		    // 3. 10セット終了後の位置調整
+		    // ========================================================
+		
+		    else {
+		        const uint32_t moveTime =
+		            macroTime - TEN_SETS_MS;
+		
+		        // 下へ0.5秒
+		        if (moveTime < 500) {
+		            gamepad->state.ly =
+		                GAMEPAD_JOYSTICK_MAX;
+		        }
+		
+		        // 0.1秒停止後、上へ0.4秒
+		        else if (moveTime >= 600 &&
+		                 moveTime < 1000) {
+		            gamepad->state.ly =
+		                GAMEPAD_JOYSTICK_MIN;
+		        }
+		
+		        // それ以外はスティック中央
+		        else {
+		            gamepad->state.ly =
+		                GAMEPAD_JOYSTICK_MID;
+		        }
 		    }
 		}
 
