@@ -298,7 +298,7 @@ void GP2040::run() {
 		constexpr uint32_t BUTTON_R = GAMEPAD_MASK_R1;
 		
 		constexpr uint8_t DPAD_UP    = GAMEPAD_MASK_UP;
-		constexpr uint8_t DPAD_RIGHT = GAMEPAD_MASK_RIGHT;
+		constexpr uint8_t DPAD_LEFT  = GAMEPAD_MASK_LEFT;
 		
 		// ------------------------------------------------------------
 		// 時間定数
@@ -369,65 +369,65 @@ void GP2040::run() {
 		        }
 		    };
 		
-		// ============================================================
-		// 1. 起動時のコントローラー認識・カーソル操作
-		//
-		// L＋R → A → B → 上 → 右 → 右 → A
-		// ============================================================
-		
-		// 2.0秒：L＋R
-		if (elapsed >= 2000 && elapsed < 2000 + PRESS_MS) {
-		    gamepad->state.buttons |= BUTTON_L;
-		    gamepad->state.buttons |= BUTTON_R;
-		}
-		
-		// 3.0秒：A
-		pressButtonDuring(
-		    elapsed,
-		    3000,
-		    PRESS_MS,
-		    BUTTON_A
-		);
-		
-		// 4.0秒：B
-		pressButtonDuring(
-		    elapsed,
-		    4000,
-		    PRESS_MS,
-		    BUTTON_B
-		);
-		
-		// 5.0秒：十字キー上
-		pressDpadDuring(
-		    elapsed,
-		    5000,
-		    PRESS_MS,
-		    DPAD_UP
-		);
-		
-		// 5.6秒：十字キー右
-		pressDpadDuring(
-		    elapsed,
-		    5600,
-		    PRESS_MS,
-		    DPAD_RIGHT
-		);
-		
-		// 6.2秒：十字キー右
-		pressDpadDuring(
-		    elapsed,
-		    6200,
-		    PRESS_MS,
-		    DPAD_RIGHT
-		);
-		
-		// 7.0秒：A
-		pressButtonDuring(
-		    elapsed,
-		    7000,
-		    PRESS_MS,
-		    BUTTON_A
-		);
+				// ============================================================
+				// 1. 起動時のコントローラー認識・カーソル操作
+				//
+				// L＋R → A → B → 上 → 左 → 左 → A
+				// ============================================================
+				
+				// 2.0秒：L＋R
+				if (elapsed >= 2000 && elapsed < 2000 + PRESS_MS) {
+				    gamepad->state.buttons |= BUTTON_L;
+				    gamepad->state.buttons |= BUTTON_R;
+				}
+				
+				// 3.0秒：A
+				pressButtonDuring(
+				    elapsed,
+				    3000,
+				    PRESS_MS,
+				    BUTTON_A
+				);
+				
+				// 4.0秒：B
+				pressButtonDuring(
+				    elapsed,
+				    4000,
+				    PRESS_MS,
+				    BUTTON_B
+				);
+				
+				// 5.0秒：十字キー上
+				pressDpadDuring(
+				    elapsed,
+				    5000,
+				    PRESS_MS,
+				    DPAD_UP
+				);
+				
+				// 5.6秒：十字キー左
+				pressDpadDuring(
+				    elapsed,
+				    5600,
+				    PRESS_MS,
+				    DPAD_LEFT
+				);
+				
+				// 6.2秒：十字キー左
+				pressDpadDuring(
+				    elapsed,
+				    6200,
+				    PRESS_MS,
+				    DPAD_LEFT
+				);
+				
+				// 7.0秒：A
+				pressButtonDuring(
+				    elapsed,
+				    7000,
+				    PRESS_MS,
+				    BUTTON_A
+				);
 		
 		// ============================================================
 		// 2. シンクロミ周回
